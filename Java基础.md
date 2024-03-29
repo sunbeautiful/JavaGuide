@@ -184,6 +184,149 @@ Java中没有地址引用传递。另一个类似的问题是关于 Java 通过�
 3) 使用 String 时，总是存在在日志文件或控制台中打印纯文本的风险，但如果使用 Array，则不会打印数组的内容而是打印其内存位置。虽然不是一个真正的原因，但仍然有道理。
 
 
+### String s1 = new String("abc");这句话创建了几个字符串对象？
+会创建 1 或 2 个字符串对象。
+
+1、如果字符串常量池中不存在字符串对象“abc”的引用，那么它会在堆上创建两个字符串对象，"abc"一个对象，new String()一个对象,其中一个字符串abc对象的引用会被保存在字符串常量池中。
+```
+1、 Sting s  定义了一个变量s，没有创建对象；
+2、 =  赋值，将某个对象的引用（句柄）赋给s ，没有创建对象；
+3、 “abc” 创建一个对象；
+4、 new String（） 创建一个对象。
+````
+### String 类型的变量和常量做“+”运算时发生了什么？
+**对于编译期可以确定值的字符串，也就是常量字符串 ，jvm 会将其存入字符串常量池。并且，字符串常量拼接得到的字符串常量在编译阶段就已经被存放字符串常量池，这个得益于编译器的优化。**
+
+在编译过程中，Javac 编译器（下文中统称为编译器）会进行一个叫做 **常量折叠(Constant Folding)** 的代码优化。《深入理解 Java 虚拟机》中是也有介绍到：
+
+常量折叠会把常量表达式的值求出来作为常量嵌在最终生成的代码中，这是 Javac 编译器会对源代码做的极少量优化措施之一(代码优化几乎都在即时编译器中进行)。
+````
+对于 `String str3 = "str" + "ing";` 编译器会给你优化成 `String str3 = "string";` 。
+````
+并不是所有的常量都会进行折叠，只有编译器在程序编译期就可以确定值的常量才可以：
+**引用的值在程序编译期是无法确定的，编译器无法对其进行优化。**
+
+对象引用和“+”的字符串拼接方式，实际上是通过 `StringBuilder` 调用 `append()` 方法实现的，拼接完成之后调用 `toString()` 得到一个 `String` 对象 。
+```java
+String str4 = new StringBuilder().append(str1).append(str2).toString();
+```
 
 
+## 异常
+![img_1.png](img_1.png)
+### Exception 和 Error 有什么区别？
 
+在 Java 中，所有的异常都有一个共同的祖先 `java.lang` 包中的 `Throwable` 类。`Throwable` 类有两个重要的子类:
+
+- **`Exception`** :程序本身可以处理的异常，可以通过 `catch` 来进行捕获。`Exception` 又可以分为 Checked Exception (受检查异常，必须处理) 和 Unchecked Exception (不受检查异常，可以不处理)。
+- **`Error`**：`Error` 属于程序无法处理的错误 ，~~我们没办法通过 `catch` 来进行捕获~~不建议通过`catch`捕获 。例如 Java 虚拟机运行错误（`Virtual MachineError`）、虚拟机内存不够错误(`OutOfMemoryError`)、类定义错误（`NoClassDefFoundError`）等 。这些异常发生时，Java 虚拟机（JVM）一般会选择线程终止。
+
+### Checked Exception 和 Unchecked Exception 有什么区别？
+**Checked Exception** 即 受检查异常 ，Java 代码在编译过程中，如果受检查异常没有被 `catch`或者`throws` 关键字处理的话，就没办法通过编译。
+除了`RuntimeException`及其子类以外，其他的`Exception`类及其子类都属于受检查异常 。常见的受检查异常有：IO 相关的异常、`ClassNotFoundException`、`SQLException`...。
+
+**Unchecked Exception** 即 **不受检查异常** ，Java 代码在编译过程中 ，我们即使不处理不受检查异常也可以正常通过编译。
+
+`RuntimeException` 及其子类都统称为非受检查异常，常见的有（建议记下来，日常开发中会经常用到）：
+
+- `NullPointerException`(空指针错误)
+- `IllegalArgumentException`(参数错误比如方法入参类型错误)
+- `NumberFormatException`（字符串转换为数字格式错误，`IllegalArgumentException`的子类）
+- `ArrayIndexOutOfBoundsException`（数组越界错误）
+- `ClassCastException`（类型转换错误）
+- `ArithmeticException`（算术错误）
+- `SecurityException` （安全错误比如权限不够）
+- `UnsupportedOperationException`(不支持的操作错误比如重复创建同一用户)
+- ……
+
+## 泛型
+**Java 泛型（Generics）** 是 JDK 5 中引入的一个新特性。使用泛型参数，可以增强代码的可读性以及稳定性。
+### 泛型的使用方式有哪几种？
+
+泛型一般有三种使用方式:**泛型类**、**泛型接口**、**泛型方法**。
+
+**1.泛型类**：
+
+```java
+//此处T可以随便写为任意标识，常见的如T、E、K、V等形式的参数常用于表示泛型
+//在实例化泛型类时，必须指定T的具体类型
+public class Generic<T>{
+
+    private T key;
+
+    public Generic(T key) {
+        this.key = key;
+    }
+
+    public T getKey(){
+        return key;
+    }
+}
+```
+
+**2.泛型接口**：
+
+```java
+public interface Generator<T> {
+    public T method();
+}
+```
+
+实现泛型接口，不指定类型：
+
+```java
+class GeneratorImpl<T> implements Generator<T>{
+    @Override
+    public T method() {
+        return null;
+    }
+}
+```
+
+**3.泛型方法**：
+
+```java
+   public static < E > void printArray( E[] inputArray )
+   {
+         for ( E element : inputArray ){
+            System.out.printf( "%s ", element );
+         }
+         System.out.println();
+    }
+```
+### 项目中哪里用到了泛型？
+
+- 自定义接口通用返回结果 `CommonResult<T>` 通过参数 `T` 可根据具体的返回类型动态指定结果的数据类型
+- 定义 `Excel` 处理类 `ExcelUtil<T>` 用于动态指定 `Excel` 导出的数据类型
+- 构建集合工具类（参考 `Collections` 中的 `sort`, `binarySearch` 方法）。
+- ……
+## SPI
+
+- SPI (Service Provider Interface) 是一种服务发现机制，它允许第三方提供者为核心库或主框架提供实现或扩展。这种设计允许核心库/框架在不修改自身代码的情况下，通过第三方实现来增强功能。
+- 在Spring中，SPI的概念与Spring Boot使用的spring.factories文件的机制不完全一样，但是它们都体现了可插拔、可扩展的思想。
+```主要的流程就是：
+    1. 通过 URL 工具类从 jar 包的 `/META-INF/services` 目录下面找到对应的文件，
+    2. 读取这个文件的名称找到对应的 spi 接口，
+    3. 通过 `InputStream` 流将文件里面的具体实现类的全类名读取出来，
+    4. 根据获取到的全类名，先判断跟 spi 接口是否为同一类型，如果是的，那么就通过反射的机制构造对应的实例对象，
+    5. 将构造出来的实例对象添加到 `Providers` 的列表中。
+    
+    1、SPI的核心就是ServiceLoader.load()方法
+    
+    总结如下：
+    调用ServiceLoader.load()，创建一个ServiceLoader实例对象
+    创建LazyIterator实例对象lookupIterator
+    通过lookupIterator.hasNextService()方法读取固定目录META-INF/services/下面service全限定名文件，放在Enumeration对象configs中
+    解析configs得到迭代器对象Iterator<String> pending
+    通过lookupIterator.nextService()方法初始化读取到的实现类，通过Class.forName()初始化
+
+```
+Java SPI 实际上是“基于接口的编程＋策略模式＋配置文件”组合实现的动态加载机制，实现不修改任何代码的情况下切换不同的实现。
+二、使用场景
+很多开源第三方jar包都有基于SPI的实现，在jar包META-INF/services中都有相关配置文件。
+
+##### 如下几个常见的场景：
+
+1) JDBC加载不同类型的数据库驱动
+2) Slf4j日志框架
+3) Dubbo框架
